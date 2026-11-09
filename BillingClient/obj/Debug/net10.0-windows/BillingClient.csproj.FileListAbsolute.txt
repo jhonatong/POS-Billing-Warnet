@@ -1,0 +1,14 @@
+C:\Project jo\warnet\BillingClient\bin\Debug\net10.0-windows\BillingClient.exe
+C:\Project jo\warnet\BillingClient\bin\Debug\net10.0-windows\BillingClient.deps.json
+C:\Project jo\warnet\BillingClient\bin\Debug\net10.0-windows\BillingClient.runtimeconfig.json
+C:\Project jo\warnet\BillingClient\bin\Debug\net10.0-windows\BillingClient.dll
+C:\Project jo\warnet\BillingClient\bin\Debug\net10.0-windows\BillingClient.pdb
+C:\Project jo\warnet\BillingClient\obj\Debug\net10.0-windows\BillingClient.GeneratedMSBuildEditorConfig.editorconfig
+C:\Project jo\warnet\BillingClient\obj\Debug\net10.0-windows\BillingClient.AssemblyInfoInputs.cache
+C:\Project jo\warnet\BillingClient\obj\Debug\net10.0-windows\BillingClient.AssemblyInfo.cs
+C:\Project jo\warnet\BillingClient\obj\Debug\net10.0-windows\BillingClient.csproj.CoreCompileInputs.cache
+C:\Project jo\warnet\BillingClient\obj\Debug\net10.0-windows\BillingClient.dll
+C:\Project jo\warnet\BillingClient\obj\Debug\net10.0-windows\refint\BillingClient.dll
+C:\Project jo\warnet\BillingClient\obj\Debug\net10.0-windows\BillingClient.pdb
+C:\Project jo\warnet\BillingClient\obj\Debug\net10.0-windows\BillingClient.genruntimeconfig.cache
+C:\Project jo\warnet\BillingClient\obj\Debug\net10.0-windows\ref\BillingClient.dll

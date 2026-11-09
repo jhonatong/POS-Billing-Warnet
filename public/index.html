@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warnet Manager - Dashboard Kasir</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide & Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #f8fafc; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+
+    <!-- TOPBAR SEDERHANA & BERSIH -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-6">
+                <!-- Logo Minimalis -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                        <i class="fa-solid fa-desktop text-xs"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-sm font-bold tracking-tight text-slate-900">Warnet Manager</h1>
+                        <p class="text-[11px] text-slate-500">Sistem Billing & Kasir</p>
+                    </div>
+                </div>
+
+                <!-- Menu Tab Navigasi Bersih -->
+                <nav class="hidden md:flex items-center space-x-1 pl-4 border-l border-slate-200 text-xs font-medium">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn px-3.5 py-2 rounded-lg bg-slate-100 text-slate-900 font-semibold transition">
+                        <i class="fa-solid fa-table-cells-large mr-1.5 text-slate-600"></i> Monitoring PC
+                    </button>
+                    <button onclick="switchTab('pos')" id="nav-pos" class="tab-btn px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition">
+                        <i class="fa-solid fa-mug-saucer mr-1.5 text-slate-500"></i> Kantin & Snack
+                    </button>
+                    <button onclick="switchTab('members')" id="nav-members" class="tab-btn px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition">
+                        <i class="fa-solid fa-user-group mr-1.5 text-slate-500"></i> Data Member
+                    </button>
+                    <button onclick="switchTab('packages')" id="nav-packages" class="tab-btn px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition">
+                        <i class="fa-solid fa-tag mr-1.5 text-slate-500"></i> Paket Tarif
+                    </button>
+                    <button onclick="switchTab('transactions')" id="nav-transactions" class="tab-btn px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition">
+                        <i class="fa-solid fa-receipt mr-1.5 text-slate-500"></i> Laporan Transaksi
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Bagian Kanan: Status & Profil -->
+            <div class="flex items-center space-x-4">
+                <div class="hidden sm:block text-right">
+                    <p id="live-clock" class="text-xs font-mono font-semibold text-slate-800">00:00:00</p>
+                    <p id="live-date" class="text-[11px] text-slate-400">Senin, 09 Nov 2026</p>
+                </div>
+
+                <div id="conn-badge" class="px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span>Menyambung...</span>
+                </div>
+
+                <div class="pl-2 border-l border-slate-200 flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-full bg-slate-100 border border-slate-200 text-slate-600 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <span class="text-xs font-medium text-slate-700 hidden lg:inline" id="cashier-name">Kasir</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- KONTEN UTAMA -->
+    <main class="max-w-7xl w-full mx-auto p-6 flex-1 space-y-6">
+
+        <!-- TAB 1: MONITORING PC -->
+        <section id="tab-dashboard" class="space-y-6">
+            
+            <!-- RINGKASAN ANGKA (STATS) ELEGAN & MINIMALIS -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Total PC</p>
+                        <h3 class="text-xl font-bold text-slate-900 mt-0.5" id="stat-total-pc">0</h3>
+                    </div>
+                    <div class="w-9 h-9 rounded-lg bg-slate-50 text-slate-500 flex items-center justify-center text-sm border border-slate-100">
+                        <i class="fa-solid fa-computer"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Sedang Digunakan</p>
+                        <h3 class="text-xl font-bold text-blue-600 mt-0.5" id="stat-in-use">0</h3>
+                    </div>
+                    <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm border border-blue-100">
+                        <i class="fa-solid fa-play"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">PC Tersedia</p>
+                        <h3 class="text-xl font-bold text-emerald-600 mt-0.5" id="stat-available">0</h3>
+                    </div>
+                    <div class="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm border border-emerald-100">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200/80 rounded-xl p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Total Omset</p>
+                        <h3 class="text-lg font-bold font-mono text-slate-900 mt-0.5" id="stat-income">Rp 0</h3>
+                    </div>
+                    <div class="w-9 h-9 rounded-lg bg-slate-50 text-slate-600 flex items-center justify-center text-sm border border-slate-100">
+                        <i class="fa-solid fa-wallet"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACTION BAR & FILTER -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200/80 shadow-sm">
+                <div class="flex items-center space-x-1">
+                    <button onclick="filterPcs('all')" id="filter-all" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white transition">Semua (<span id="count-all">0</span>)</button>
+                    <button onclick="filterPcs('in_use')" id="filter-in_use" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition">Dipakai (<span id="count-in_use">0</span>)</button>
+                    <button onclick="filterPcs('available')" id="filter-available" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition">Kosong (<span id="count-available">0</span>)</button>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <button onclick="openModalChat('ALL')" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-50 transition flex items-center gap-1.5">
+                        <i class="fa-regular fa-comment-dots text-slate-500"></i> Kirim Pesan
+                    </button>
+                    <button onclick="openModalAddPc()" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-plus text-[10px]"></i> Tambah PC
+                    </button>
+                </div>
+            </div>
+
+            <!-- GRID DAFTAR PC -->
+            <div id="pc-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Di-render oleh JavaScript -->
+            </div>
+        </section>
+
+        <!-- TAB 2: KANTIN & SNACK (POS) -->
+        <section id="tab-pos" class="hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Katalog Menu -->
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900">Kantin & Snack</h2>
+                            <p class="text-xs text-slate-500">Pilih menu pesanan untuk dicatat ke kasir atau diantar ke PC</p>
+                        </div>
+                    </div>
+
+                    <!-- Kategori -->
+                    <div class="flex space-x-2">
+                        <button onclick="filterFnb('all')" class="fnb-cat-btn px-3 py-1 rounded-lg text-xs font-semibold bg-slate-900 text-white">Semua</button>
+                        <button onclick="filterFnb('Makanan')" class="fnb-cat-btn px-3 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 bg-white border border-slate-200">Makanan</button>
+                        <button onclick="filterFnb('Minuman')" class="fnb-cat-btn px-3 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 bg-white border border-slate-200">Minuman</button>
+                        <button onclick="filterFnb('Snack')" class="fnb-cat-btn px-3 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 bg-white border border-slate-200">Snack & Lainnya</button>
+                    </div>
+
+                    <!-- Menu List -->
+                    <div id="fnb-menu-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Keranjang Kasir -->
+                <div class="bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm flex flex-col h-[520px]">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Daftar Pesanan</h3>
+                        <button onclick="clearFnbCart()" class="text-[11px] text-slate-400 hover:text-rose-600 transition">Kosongkan</button>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="block text-[11px] font-medium text-slate-500 mb-1">PC / Meja Pemesan:</label>
+                        <select id="fnb-target-pc" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-slate-400">
+                            <option value="">-- Beli Langsung (Kasir) --</option>
+                        </select>
+                    </div>
+
+                    <div id="fnb-cart-items" class="flex-1 overflow-y-auto space-y-2 pr-1">
+                        <!-- Keranjang Kosong / Terisi -->
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-100 space-y-3 mt-2">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-xs text-slate-500">Total Tagihan:</span>
+                            <span id="fnb-total-amount" class="text-base font-bold font-mono text-slate-900">Rp 0</span>
+                        </div>
+                        <button onclick="submitFnbOrder()" id="btn-fnb-submit" disabled class="w-full py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-slate-900 text-white font-semibold text-xs transition">
+                            Proses & Bayar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: DATA MEMBER -->
+        <section id="tab-members" class="hidden space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Data Member</h2>
+                    <p class="text-xs text-slate-500">Daftar akun langganan dan saldo pelanggan</p>
+                </div>
+                <button onclick="openModalAddMember()" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus text-[10px]"></i> Member Baru
+                </button>
+            </div>
+
+            <div class="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-sm">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-500 font-medium border-b border-slate-200/80">
+                        <tr>
+                            <th class="px-4 py-3">Username</th>
+                            <th class="px-4 py-3">Nama Lengkap</th>
+                            <th class="px-4 py-3">No. HP</th>
+                            <th class="px-4 py-3">Tipe</th>
+                            <th class="px-4 py-3">Sisa Saldo</th>
+                            <th class="px-4 py-3 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="member-table-body" class="divide-y divide-slate-100">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- TAB 4: PAKET TARIF -->
+        <section id="tab-packages" class="hidden space-y-4">
+            <div>
+                <h2 class="text-base font-bold text-slate-900">Paket Tarif Sewa</h2>
+                <p class="text-xs text-slate-500">Pilihan paket billing yang aktif</p>
+            </div>
+
+            <div id="packages-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Populated via JS -->
+            </div>
+        </section>
+
+        <!-- TAB 5: LAPORAN TRANSAKSI -->
+        <section id="tab-transactions" class="hidden space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Laporan Transaksi</h2>
+                    <p class="text-xs text-slate-500">Semua catatan pendapatan kasir tercatat rapi</p>
+                </div>
+                <button onclick="exportTransactionsCSV()" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-medium text-slate-700 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-download text-slate-400"></i> Unduh CSV
+                </button>
+            </div>
+
+            <div class="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-sm">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-500 font-medium border-b border-slate-200/80">
+                        <tr>
+                            <th class="px-4 py-3">ID</th>
+                            <th class="px-4 py-3">Waktu</th>
+                            <th class="px-4 py-3">Kategori</th>
+                            <th class="px-4 py-3">Keterangan</th>
+                            <th class="px-4 py-3">Nominal</th>
+                            <th class="px-4 py-3">Kasir</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transaction-table-body" class="divide-y divide-slate-100">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER MINIMALIS -->
+    <footer class="border-t border-slate-200/80 bg-white py-3 px-6 text-center text-xs text-slate-400">
+        Warnet Manager &copy; 2026. Antarmuka kasir sederhana dan andal.
+    </footer>
+
+    <!-- ==================== MODALS RINGAN & MINIMALIS ==================== -->
+
+    <!-- Modal Mulai Sesi -->
+    <div id="modal-start-session" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-lg border border-slate-200 space-y-4 relative">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900" id="modal-pc-target-label">Mulai Sesi PC-01</h3>
+                <button onclick="closeModal('modal-start-session')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="form-start-session" onsubmit="handleStartSessionSubmit(event)" class="space-y-3">
+                <input type="hidden" id="start-pc-id">
+                
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Nama Pelanggan:</label>
+                    <input type="text" id="start-customer-name" value="Pelanggan" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-slate-900">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Pilih Paket:</label>
+                    <select id="start-package-select" onchange="handlePackageSelectChange()" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-slate-900">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-100 rounded-lg p-3 flex justify-between items-center text-xs">
+                    <span class="text-slate-500" id="start-duration-label">60 Menit</span>
+                    <span class="font-mono font-bold text-slate-900" id="start-price-label">Rp 5.000</span>
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-start-session')" class="w-1/2 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50">Batal</button>
+                    <button type="submit" class="w-1/2 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold">Buka Kunci (Start)</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tambah Waktu -->
+    <div id="modal-add-time" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-lg border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900" id="modal-addtime-pc-label">Tambah Waktu PC-01</h3>
+                <button onclick="closeModal('modal-add-time')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="form-add-time" onsubmit="handleAddTimeSubmit(event)" class="space-y-3">
+                <input type="hidden" id="addtime-pc-id">
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" onclick="setAddTimeChoice(30, 3000, this)" class="addtime-btn p-2.5 rounded-lg border border-slate-200 text-left hover:border-slate-400">
+                        <span class="block text-xs font-medium text-slate-800">+30 Menit</span>
+                        <span class="block text-[11px] font-mono text-slate-500">Rp 3.000</span>
+                    </button>
+                    <button type="button" onclick="setAddTimeChoice(60, 5000, this)" class="addtime-btn p-2.5 rounded-lg border-2 border-slate-900 text-left bg-slate-50">
+                        <span class="block text-xs font-bold text-slate-900">+1 Jam</span>
+                        <span class="block text-[11px] font-mono text-slate-600">Rp 5.000</span>
+                    </button>
+                    <button type="button" onclick="setAddTimeChoice(120, 9000, this)" class="addtime-btn p-2.5 rounded-lg border border-slate-200 text-left hover:border-slate-400">
+                        <span class="block text-xs font-medium text-slate-800">+2 Jam</span>
+                        <span class="block text-[11px] font-mono text-slate-500">Rp 9.000</span>
+                    </button>
+                    <button type="button" onclick="setAddTimeChoice(180, 13000, this)" class="addtime-btn p-2.5 rounded-lg border border-slate-200 text-left hover:border-slate-400">
+                        <span class="block text-xs font-medium text-slate-800">+3 Jam</span>
+                        <span class="block text-[11px] font-mono text-slate-500">Rp 13.000</span>
+                    </button>
+                </div>
+
+                <input type="hidden" id="selected-add-minutes" value="60">
+                <input type="hidden" id="selected-add-price" value="5000">
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-add-time')" class="w-1/2 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50">Batal</button>
+                    <button type="submit" class="w-1/2 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold">Tambahkan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Pindah PC -->
+    <div id="modal-transfer" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-lg border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900">Pindah PC</h3>
+                <button onclick="closeModal('modal-transfer')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="form-transfer" onsubmit="handleTransferSubmit(event)" class="space-y-3">
+                <input type="hidden" id="transfer-source-id">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Pindahkan ke PC Tujuan (Kosong):</label>
+                    <select id="transfer-target-select" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-slate-900">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+
+                <p class="text-[11px] text-slate-500">Sisa waktu akan ditransfer otomatis dan PC asal akan langsung dikunci.</p>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-transfer')" class="w-1/2 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50">Batal</button>
+                    <button type="submit" class="w-1/2 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold">Pindahkan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Pesan Chat -->
+    <div id="modal-chat" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-lg border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900" id="modal-chat-target-label">Kirim Pesan ke Client</h3>
+                <button onclick="closeModal('modal-chat')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="form-chat" onsubmit="handleSendChatSubmit(event)" class="space-y-3">
+                <input type="hidden" id="chat-target-pc">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Teks Pesan:</label>
+                    <textarea id="chat-message-text" rows="3" required placeholder="Contoh: Waktu sewa tinggal 5 menit..." class="w-full border border-slate-200 rounded-lg p-2.5 text-xs focus:outline-none focus:border-slate-900"></textarea>
+                </div>
+
+                <div class="flex gap-2">
+                    <button type="button" onclick="closeModal('modal-chat')" class="w-1/2 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50">Batal</button>
+                    <button type="submit" class="w-1/2 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold">Kirim</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tambah PC -->
+    <div id="modal-add-pc" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-lg border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900">Tambah Unit PC</h3>
+                <button onclick="closeModal('modal-add-pc')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="form-add-pc" onsubmit="handleAddPcSubmit(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">ID Komputer (Client Name):</label>
+                    <input type="text" id="newpc-id" placeholder="Misal: PC-07" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs uppercase focus:outline-none focus:border-slate-900">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Nama Tampilan:</label>
+                    <input type="text" id="newpc-name" placeholder="Misal: PC-07" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-slate-900">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Kategori / Ruang:</label>
+                    <select id="newpc-group" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-slate-900">
+                        <option value="Reguler">Reguler</option>
+                        <option value="VIP">VIP</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-add-pc')" class="w-1/2 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50">Batal</button>
+                    <button type="submit" class="w-1/2 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tambah Member -->
+    <div id="modal-add-member" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-lg border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900">Daftar Member Baru</h3>
+                <button onclick="closeModal('modal-add-member')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="form-add-member" onsubmit="handleAddMemberSubmit(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Username:</label>
+                    <input type="text" id="member-username" placeholder="gamer123" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-slate-900">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Nama Lengkap:</label>
+                    <input type="text" id="member-name" placeholder="Nama pelanggan" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-slate-900">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Nomor HP:</label>
+                    <input type="text" id="member-phone" placeholder="08xxxxxxxxxx" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-slate-900">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Deposit Awal (Rp):</label>
+                    <input type="number" id="member-deposit" value="20000" min="0" step="5000" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-slate-900">
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-add-member')" class="w-1/2 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50">Batal</button>
+                    <button type="submit" class="w-1/2 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold">Simpan Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Isi Saldo Member -->
+    <div id="modal-topup" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-lg border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900">Isi Saldo Member</h3>
+                <button onclick="closeModal('modal-topup')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="form-topup" onsubmit="handleTopupSubmit(event)" class="space-y-3">
+                <input type="hidden" id="topup-member-id">
+                <p class="text-xs text-slate-600 font-medium" id="modal-topup-member-label">User: -</p>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" onclick="setTopupAmount(10000)" class="p-2 border border-slate-200 rounded-lg text-xs font-mono hover:bg-slate-50">10.000</button>
+                    <button type="button" onclick="setTopupAmount(20000)" class="p-2 border border-slate-200 rounded-lg text-xs font-mono hover:bg-slate-50">20.000</button>
+                    <button type="button" onclick="setTopupAmount(50000)" class="p-2 border border-slate-200 rounded-lg text-xs font-mono hover:bg-slate-50">50.000</button>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Nominal (Rp):</label>
+                    <input type="number" id="topup-custom-amount" value="20000" min="5000" step="5000" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-slate-900">
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-topup')" class="w-1/2 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50">Batal</button>
+                    <button type="submit" class="w-1/2 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold">Konfirmasi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        let appState = {
+            pcs: [],
+            packages: [],
+            menuItems: [],
+            members: [],
+            transactions: [],
+            settings: {},
+            cashierShift: {}
+        };
+
+        let currentTab = 'dashboard';
+        let pcFilter = 'all';
+        let fnbFilter = 'all';
+        let fnbCart = {};
+
+        // Jam Real-time
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('live-clock').textContent = now.toLocaleTimeString('id-ID');
+            document.getElementById('live-date').textContent = now.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+        }, 1000);
+
+        // WebSocket
+        let ws;
+        function connectWebSocket() {
+            const wsUrl = `ws://${window.location.hostname || 'localhost'}:3000`;
+            ws = new WebSocket(wsUrl);
+
+            const badge = document.getElementById('conn-badge');
+
+            ws.onopen = () => {
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span>Terkoneksi</span>`;
+                badge.className = "px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5";
+                ws.send(JSON.stringify({ event: 'register_admin' }));
+            };
+
+            ws.onmessage = (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.event === 'full_sync') {
+                        appState = data.state;
+                        renderAll();
+                    } else if (data.event === 'session_expired') {
+                        showNotification(data.message, 'warning');
+                    }
+                } catch (err) {
+                    console.error('Error parsing WS message:', err);
+                }
+            };
+
+            ws.onclose = () => {
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span><span>Terputus</span>`;
+                badge.className = "px-2.5 py-1 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1.5";
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        connectWebSocket();
+
+        function renderAll() {
+            // Stats
+            const total = appState.pcs.length;
+            const inUse = appState.pcs.filter(p => p.status === 'in_use').length;
+            const available = appState.pcs.filter(p => p.status === 'available').length;
+
+            document.getElementById('stat-total-pc').textContent = total;
+            document.getElementById('stat-in-use').textContent = inUse;
+            document.getElementById('stat-available').textContent = available;
+
+            document.getElementById('count-all').textContent = total;
+            document.getElementById('count-in_use').textContent = inUse;
+            document.getElementById('count-available').textContent = available;
+
+            const totalIncome = appState.transactions.reduce((acc, t) => acc + (t.amount || 0), 0);
+            document.getElementById('stat-income').textContent = formatRupiah(totalIncome);
+
+            if (appState.cashierShift && appState.cashierShift.activeUser) {
+                document.getElementById('cashier-name').textContent = appState.cashierShift.activeUser;
+            }
+
+            renderPcGrid();
+            renderFnbMenu();
+            renderMembersTable();
+            renderPackagesGrid();
+            renderTransactionsTable();
+            populateTargetPcOptions();
+        }
+
+        // 1. RENDER DAFTAR PC (BERSIH & RAPI)
+        function renderPcGrid() {
+            const grid = document.getElementById('pc-grid');
+            grid.innerHTML = '';
+
+            let filtered = appState.pcs;
+            if (pcFilter === 'in_use') filtered = appState.pcs.filter(p => p.status === 'in_use');
+            if (pcFilter === 'available') filtered = appState.pcs.filter(p => p.status === 'available');
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 text-xs">Tidak ada PC.</div>`;
+                return;
+            }
+
+            filtered.forEach(pc => {
+                const isInUse = pc.status === 'in_use';
+                const remaining = pc.session ? (pc.session.remainingSeconds || 0) : 0;
+
+                const hrs = Math.floor(remaining / 3600);
+                const mins = Math.floor((remaining % 3600) / 60);
+                const secs = remaining % 60;
+                const timeString = `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-xl border p-4 shadow-sm transition flex flex-col justify-between ${
+                    isInUse ? 'border-blue-200 ring-1 ring-blue-500/20' : 'border-slate-200/80 hover:border-slate-300'
+                }`;
+
+                card.innerHTML = `
+                    <div>
+                        <!-- Header Baris Atas -->
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900">${pc.name}</h3>
+                                <p class="text-[11px] text-slate-500">${pc.group || 'Reguler'}</p>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                                isInUse ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            }">
+                                ${isInUse ? 'Sedang Main' : 'Tersedia'}
+                            </span>
+                        </div>
+
+                        <!-- Data Sesi -->
+                        <div class="bg-slate-50/70 border border-slate-100 rounded-lg p-3 mb-4 space-y-1.5 text-xs">
+                            <div class="flex justify-between">
+                                <span class="text-slate-500">Pelanggan:</span>
+                                <span class="font-medium text-slate-800">${isInUse && pc.session ? pc.session.customerName : '-'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-500">Sisa Waktu:</span>
+                                <span class="font-mono font-semibold ${isInUse ? 'text-blue-600' : 'text-slate-400'}">${isInUse ? timeString : '--:--:--'}</span>
+                            </div>
+                            <div class="flex justify-between border-t border-slate-200/60 pt-1.5">
+                                <span class="text-slate-500">Tarif:</span>
+                                <span class="font-mono font-semibold text-slate-900">${isInUse && pc.session ? formatRupiah(pc.session.price || 0) : 'Rp 0'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Aksi -->
+                    <div>
+                        ${!isInUse ? `
+                            <button onclick="openModalStartSession('${pc.id}')" class="w-full py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs transition">
+                                Mulai Sesi
+                            </button>
+                        ` : `
+                            <div class="grid grid-cols-2 gap-1.5 mb-1.5">
+                                <button onclick="openModalAddTime('${pc.id}')" class="py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-xs transition">
+                                    + Waktu
+                                </button>
+                                <button onclick="openModalTransfer('${pc.id}')" class="py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-xs transition">
+                                    Pindah PC
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-1.5">
+                                <button onclick="openModalChat('${pc.id}')" class="py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium text-xs transition">
+                                    Pesan
+                                </button>
+                                <button onclick="confirmStopSession('${pc.id}')" class="py-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 font-medium text-xs transition">
+                                    Kunci (Stop)
+                                </button>
+                            </div>
+                        `}
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        // 2. RENDER F&B MENU
+        function renderFnbMenu() {
+            const grid = document.getElementById('fnb-menu-grid');
+            grid.innerHTML = '';
+
+            let items = appState.menuItems;
+            if (fnbFilter !== 'all') {
+                if (fnbFilter === 'Snack') {
+                    items = items.filter(m => m.category === 'Snack' || m.category === 'Lainnya');
+                } else {
+                    items = items.filter(m => m.category === fnbFilter);
+                }
+            }
+
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.onclick = () => addFnbToCart(item.id);
+                card.className = "bg-white border border-slate-200/80 hover:border-slate-300 p-3.5 rounded-xl cursor-pointer transition shadow-xs flex flex-col justify-between";
+                
+                card.innerHTML = `
+                    <div class="flex items-start justify-between">
+                        <span class="text-xs font-semibold text-slate-800 leading-snug">${item.name}</span>
+                        <span class="text-[10px] text-slate-400 ml-2">${item.stock}</span>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                        <span class="text-xs font-mono font-semibold text-slate-900">${formatRupiah(item.price)}</span>
+                        <span class="text-slate-400 text-xs hover:text-slate-700">+ Tambah</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            renderFnbCart();
+        }
+
+        function addFnbToCart(itemId) {
+            fnbCart[itemId] = (fnbCart[itemId] || 0) + 1;
+            renderFnbCart();
+        }
+
+        function removeFnbFromCart(itemId) {
+            if (fnbCart[itemId]) {
+                fnbCart[itemId]--;
+                if (fnbCart[itemId] <= 0) delete fnbCart[itemId];
+                renderFnbCart();
+            }
+        }
+
+        function clearFnbCart() {
+            fnbCart = {};
+            renderFnbCart();
+        }
+
+        function renderFnbCart() {
+            const container = document.getElementById('fnb-cart-items');
+            const totalEl = document.getElementById('fnb-total-amount');
+            const submitBtn = document.getElementById('btn-fnb-submit');
+
+            const itemIds = Object.keys(fnbCart);
+            if (itemIds.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-10">Belum ada item dipilih.</p>`;
+                totalEl.textContent = 'Rp 0';
+                submitBtn.disabled = true;
+                return;
+            }
+
+            let total = 0;
+            container.innerHTML = '';
+
+            itemIds.forEach(id => {
+                const item = appState.menuItems.find(m => m.id === id);
+                if (!item) return;
+
+                const qty = fnbCart[id];
+                const subtotal = item.price * qty;
+                total += subtotal;
+
+                const row = document.createElement('div');
+                row.className = "flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100 text-xs";
+                row.innerHTML = `
+                    <div class="flex-1 pr-2">
+                        <p class="font-medium text-slate-800 truncate">${item.name}</p>
+                        <p class="text-[11px] text-slate-500 font-mono">${formatRupiah(subtotal)}</p>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="removeFnbFromCart('${id}')" class="w-5 h-5 rounded bg-white border border-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">-</button>
+                        <span class="w-4 text-center font-semibold text-slate-800 text-xs">${qty}</span>
+                        <button onclick="addFnbToCart('${id}')" class="w-5 h-5 rounded bg-white border border-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs">+</button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            totalEl.textContent = formatRupiah(total);
+            submitBtn.disabled = false;
+        }
+
+        function submitFnbOrder() {
+            const targetPc = document.getElementById('fnb-target-pc').value;
+            const items = Object.keys(fnbCart).map(id => ({ id, qty: fnbCart[id] }));
+            
+            let total = 0;
+            items.forEach(i => {
+                const m = appState.menuItems.find(x => x.id === i.id);
+                if (m) total += m.price * i.qty;
+            });
+
+            ws.send(JSON.stringify({
+                event: 'order_fnb',
+                pcName: targetPc || null,
+                items: items,
+                totalAmount: total,
+                paymentMethod: 'Cash'
+            }));
+
+            clearFnbCart();
+            showNotification('Pesanan berhasil dicatat!', 'success');
+        }
+
+        function populateTargetPcOptions() {
+            const select = document.getElementById('fnb-target-pc');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- Beli Langsung (Kasir) --</option>';
+
+            appState.pcs.forEach(pc => {
+                const opt = document.createElement('option');
+                opt.value = pc.id;
+                opt.textContent = `${pc.name} ${pc.status === 'in_use' ? `(${pc.session ? pc.session.customerName : 'Aktif'})` : '(Kosong)'}`;
+                select.appendChild(opt);
+            });
+
+            select.value = currentVal;
+        }
+
+        // 3. RENDER DATA MEMBER
+        function renderMembersTable() {
+            const tbody = document.getElementById('member-table-body');
+            tbody.innerHTML = '';
+
+            appState.members.forEach(member => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/50 transition";
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-mono font-medium text-slate-900">${member.username}</td>
+                    <td class="px-4 py-3 text-slate-700">${member.name}</td>
+                    <td class="px-4 py-3 text-slate-500">${member.phone}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600">${member.role}</span></td>
+                    <td class="px-4 py-3 font-mono font-semibold text-slate-900">${formatRupiah(member.balance)}</td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="openModalTopup('${member.id}', '${member.username}')" class="px-2.5 py-1 rounded-md border border-slate-200 text-slate-700 hover:bg-slate-100 transition text-xs font-medium">
+                            + Isi Saldo
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 4. RENDER PAKET TARIF
+        function renderPackagesGrid() {
+            const grid = document.getElementById('packages-grid');
+            grid.innerHTML = '';
+
+            appState.packages.forEach(pkg => {
+                const card = document.createElement('div');
+                card.className = "bg-white border border-slate-200/80 p-4 rounded-xl shadow-xs flex flex-col justify-between";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-xs text-slate-900">${pkg.name}</h3>
+                            <span class="px-2 py-0.5 text-[10px] rounded-md bg-slate-100 text-slate-600 font-mono">${pkg.durationMinutes} Menit</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-4">${pkg.desc}</p>
+                    </div>
+                    <div class="border-t border-slate-100 pt-3 flex items-center justify-between">
+                        <span class="text-xs text-slate-400">Tarif:</span>
+                        <span class="text-base font-bold font-mono text-slate-900">${formatRupiah(pkg.price)}</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // 5. RENDER TRANSAKSI
+        function renderTransactionsTable() {
+            const tbody = document.getElementById('transaction-table-body');
+            tbody.innerHTML = '';
+
+            if (appState.transactions.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400">Belum ada data transaksi.</td></tr>`;
+                return;
+            }
+
+            appState.transactions.forEach(trx => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/50 transition";
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-mono text-slate-400">${trx.id}</td>
+                    <td class="px-4 py-3 font-mono text-slate-600">${trx.time}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">${trx.type}</span></td>
+                    <td class="px-4 py-3 text-slate-800 font-medium">${trx.description}</td>
+                    <td class="px-4 py-3 font-mono font-semibold text-slate-900">${formatRupiah(trx.amount)}</td>
+                    <td class="px-4 py-3 text-slate-500">${trx.cashier || 'Kasir'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ==================== MODAL HELPER ====================
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function openModalStartSession(pcId) {
+            const pc = appState.pcs.find(p => p.id === pcId);
+            if (!pc) return;
+
+            document.getElementById('start-pc-id').value = pcId;
+            document.getElementById('modal-pc-target-label').textContent = `Mulai Sesi ${pc.name}`;
+
+            const select = document.getElementById('start-package-select');
+            select.innerHTML = '';
+            appState.packages.forEach(pkg => {
+                const opt = document.createElement('option');
+                opt.value = pkg.id;
+                opt.textContent = `${pkg.name} (${pkg.durationMinutes} Menit) - ${formatRupiah(pkg.price)}`;
+                select.appendChild(opt);
+            });
+
+            handlePackageSelectChange();
+            openModal('modal-start-session');
+        }
+
+        function handlePackageSelectChange() {
+            const pkgId = document.getElementById('start-package-select').value;
+            const pkg = appState.packages.find(p => p.id === pkgId);
+            if (pkg) {
+                document.getElementById('start-duration-label').textContent = `${pkg.durationMinutes} Menit`;
+                document.getElementById('start-price-label').textContent = formatRupiah(pkg.price);
+            }
+        }
+
+        function handleStartSessionSubmit(e) {
+            e.preventDefault();
+            const pcName = document.getElementById('start-pc-id').value;
+            const customerName = document.getElementById('start-customer-name').value;
+            const pkgId = document.getElementById('start-package-select').value;
+            const pkg = appState.packages.find(p => p.id === pkgId);
+
+            if (!pkg) return;
+
+            ws.send(JSON.stringify({
+                event: 'start_session',
+                pcName: pcName,
+                customerName: customerName,
+                type: 'prepaid',
+                durationMinutes: pkg.durationMinutes,
+                price: pkg.price,
+                packageId: pkg.id
+            }));
+
+            closeModal('modal-start-session');
+            showNotification(`Sesi ${pcName} dibuka untuk ${customerName}`, 'success');
+        }
+
+        function openModalAddTime(pcId) {
+            document.getElementById('addtime-pc-id').value = pcId;
+            document.getElementById('modal-addtime-pc-label').textContent = `Tambah Waktu ${pcId}`;
+            openModal('modal-add-time');
+        }
+
+        function setAddTimeChoice(minutes, price, el) {
+            document.getElementById('selected-add-minutes').value = minutes;
+            document.getElementById('selected-add-price').value = price;
+            
+            document.querySelectorAll('.addtime-btn').forEach(btn => {
+                btn.className = "addtime-btn p-2.5 rounded-lg border border-slate-200 text-left hover:border-slate-400";
+            });
+            if (el) {
+                el.className = "addtime-btn p-2.5 rounded-lg border-2 border-slate-900 text-left bg-slate-50";
+            }
+        }
+
+        function handleAddTimeSubmit(e) {
+            e.preventDefault();
+            const pcName = document.getElementById('addtime-pc-id').value;
+            const minutes = parseInt(document.getElementById('selected-add-minutes').value);
+            const price = parseInt(document.getElementById('selected-add-price').value);
+
+            ws.send(JSON.stringify({
+                event: 'add_time',
+                pcName: pcName,
+                addMinutes: minutes,
+                price: price
+            }));
+
+            closeModal('modal-add-time');
+            showNotification(`+${minutes} menit ditambahkan ke ${pcName}`, 'success');
+        }
+
+        function openModalTransfer(pcId) {
+            document.getElementById('transfer-source-id').value = pcId;
+            const select = document.getElementById('transfer-target-select');
+            select.innerHTML = '';
+            
+            const availablePcs = appState.pcs.filter(p => p.status === 'available' && p.id !== pcId);
+            if (availablePcs.length === 0) {
+                select.innerHTML = '<option value="">-- Tidak ada PC kosong --</option>';
+            } else {
+                availablePcs.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = `${p.name} (${p.group || 'Reguler'})`;
+                    select.appendChild(opt);
+                });
+            }
+
+            openModal('modal-transfer');
+        }
+
+        function handleTransferSubmit(e) {
+            e.preventDefault();
+            const fromPc = document.getElementById('transfer-source-id').value;
+            const toPc = document.getElementById('transfer-target-select').value;
+
+            if (!toPc) {
+                alert('Pilih PC tujuan!');
+                return;
+            }
+
+            ws.send(JSON.stringify({
+                event: 'transfer_session',
+                fromPc: fromPc,
+                toPc: toPc
+            }));
+
+            closeModal('modal-transfer');
+            showNotification(`Sesi dialihkan dari ${fromPc} ke ${toPc}`, 'success');
+        }
+
+        function openModalChat(target) {
+            document.getElementById('chat-target-pc').value = target;
+            document.getElementById('modal-chat-target-label').textContent = target === 'ALL' ? 'Kirim Pesan ke Semua PC' : `Kirim Pesan ke ${target}`;
+            document.getElementById('chat-message-text').value = '';
+            openModal('modal-chat');
+        }
+
+        function handleSendChatSubmit(e) {
+            e.preventDefault();
+            const pcName = document.getElementById('chat-target-pc').value;
+            const message = document.getElementById('chat-message-text').value;
+
+            ws.send(JSON.stringify({
+                event: 'send_chat',
+                pcName: pcName,
+                message: message
+            }));
+
+            closeModal('modal-chat');
+            showNotification('Pesan terkirim ke client', 'info');
+        }
+
+        function confirmStopSession(pcId) {
+            if (confirm(`Hentikan sesi dan kunci ${pcId}?`)) {
+                ws.send(JSON.stringify({
+                    event: 'stop_session',
+                    pcName: pcId
+                }));
+                showNotification(`Sesi di ${pcId} dihentikan`, 'warning');
+            }
+        }
+
+        function openModalAddPc() { openModal('modal-add-pc'); }
+
+        function handleAddPcSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('newpc-id').value.trim();
+            const name = document.getElementById('newpc-name').value.trim();
+            const group = document.getElementById('newpc-group').value;
+
+            ws.send(JSON.stringify({
+                event: 'add_pc',
+                id: id,
+                name: name,
+                spec: 'PC Client',
+                group: group
+            }));
+
+            closeModal('modal-add-pc');
+            showNotification(`${id} berhasil ditambahkan`, 'success');
+        }
+
+        function openModalAddMember() { openModal('modal-add-member'); }
+
+        function handleAddMemberSubmit(e) {
+            e.preventDefault();
+            const username = document.getElementById('member-username').value.trim();
+            const name = document.getElementById('member-name').value.trim();
+            const phone = document.getElementById('member-phone').value.trim();
+            const deposit = document.getElementById('member-deposit').value;
+
+            ws.send(JSON.stringify({
+                event: 'add_member',
+                username: username,
+                name: name,
+                phone: phone,
+                initialDeposit: deposit
+            }));
+
+            closeModal('modal-add-member');
+            showNotification(`Member ${username} terdaftar`, 'success');
+        }
+
+        function openModalTopup(memberId, username) {
+            document.getElementById('topup-member-id').value = memberId;
+            document.getElementById('modal-topup-member-label').textContent = `Username: ${username}`;
+            openModal('modal-topup');
+        }
+
+        function setTopupAmount(val) {
+            document.getElementById('topup-custom-amount').value = val;
+        }
+
+        function handleTopupSubmit(e) {
+            e.preventDefault();
+            const memberId = document.getElementById('topup-member-id').value;
+            const amount = parseInt(document.getElementById('topup-custom-amount').value);
+
+            ws.send(JSON.stringify({
+                event: 'topup_member',
+                memberId: memberId,
+                amount: amount
+            }));
+
+            closeModal('modal-topup');
+            showNotification(`Saldo berhasil diisi ${formatRupiah(amount)}`, 'success');
+        }
+
+        // Navigasi Tab
+        function switchTab(tabId) {
+            currentTab = tabId;
+            const tabs = ['dashboard', 'pos', 'members', 'packages', 'transactions'];
+            
+            tabs.forEach(t => {
+                const sec = document.getElementById(`tab-${t}`);
+                const btn = document.getElementById(`nav-${t}`);
+                if (t === tabId) {
+                    sec.classList.remove('hidden');
+                    btn.className = "tab-btn px-3.5 py-2 rounded-lg bg-slate-100 text-slate-900 font-semibold transition";
+                } else {
+                    sec.classList.add('hidden');
+                    btn.className = "tab-btn px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition";
+                }
+            });
+        }
+
+        function filterPcs(status) {
+            pcFilter = status;
+            ['all', 'in_use', 'available'].forEach(s => {
+                const btn = document.getElementById(`filter-${s}`);
+                if (s === status) {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white transition";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 transition";
+                }
+            });
+            renderPcGrid();
+        }
+
+        function filterFnb(cat) {
+            fnbFilter = cat;
+            document.querySelectorAll('.fnb-cat-btn').forEach(btn => {
+                btn.className = "fnb-cat-btn px-3 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 bg-white border border-slate-200";
+            });
+            event.target.className = "fnb-cat-btn px-3 py-1 rounded-lg text-xs font-semibold bg-slate-900 text-white";
+            renderFnbMenu();
+        }
+
+        function formatRupiah(number) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+        }
+
+        function showNotification(msg, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-lg shadow-lg font-medium text-xs flex items-center gap-2 bg-slate-900 text-white border border-slate-800 transition transform translate-y-2 opacity-0`;
+            toast.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> ${msg}`;
+            document.body.appendChild(toast);
+
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function exportTransactionsCSV() {
+            if (appState.transactions.length === 0) {
+                alert('Belum ada data transaksi.');
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,ID,Waktu,Kategori,Keterangan,Nominal,Kasir\n";
+            appState.transactions.forEach(t => {
+                csvContent += `"${t.id}","${t.time}","${t.type}","${t.description}",${t.amount},"${t.cashier}"\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `laporan_warnet_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+    </script>
+</body>
+</html>
