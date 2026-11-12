@@ -13,6 +13,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Path file data untuk persistensi sederhana
 const DATA_FILE = path.join(__dirname, 'billing_data.json');
+const HISTORY_FILE = path.join(__dirname, 'sessions_history.json');
 
 // Inisialisasi State default
 let state = {
@@ -100,6 +101,27 @@ setInterval(() => {
                     pc.session.remainingSeconds = 0;
                     pc.status = 'available';
                     const closedSession = pc.session;
+
+                    // --- TAMBAHAN: Simpan ke riwayat sesi selesai ---
+                    try {
+                        let history = [];
+                        if (fs.existsSync(HISTORY_FILE)) {
+                            history = JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'));
+                        }
+                        history.unshift({
+                            pcId: pc.id,
+                            customerName: closedSession.customerName,
+                            type: closedSession.type,
+                            durationMinutes: Math.floor(closedSession.totalSeconds / 60),
+                            totalPrice: closedSession.price,
+                            endedAt: new Date().toLocaleString('id-ID')
+                        });
+                        fs.writeFileSync(HISTORY_FILE, JSON.stringify(history.slice(0, 100), null, 2), 'utf8');
+                    } catch (err) {
+                        console.error('Gagal menulis history sesi:', err.message);
+                    }
+                    // ------------------------------------------------
+
                     pc.session = null;
                     stateChanged = true;
 
@@ -438,7 +460,6 @@ wss.on('connection', (ws) => {
 });
 
 function broadcastAdminState() {
-    // Sisipkan info online connection socket ke list pcs
     const onlinePcs = Object.keys(clientSockets);
     const enrichedPcs = state.pcs.map(pc => ({
         ...pc,
