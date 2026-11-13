@@ -102,7 +102,7 @@ setInterval(() => {
                     pc.status = 'available';
                     const closedSession = pc.session;
 
-                    // --- TAMBAHAN: Simpan ke riwayat sesi selesai ---
+                    // --- Simpan ke riwayat sesi selesai ---
                     try {
                         let history = [];
                         if (fs.existsSync(HISTORY_FILE)) {
@@ -120,7 +120,6 @@ setInterval(() => {
                     } catch (err) {
                         console.error('Gagal menulis history sesi:', err.message);
                     }
-                    // ------------------------------------------------
 
                     pc.session = null;
                     stateChanged = true;
@@ -143,12 +142,11 @@ setInterval(() => {
                 const elapsedSeconds = Math.floor((now - pc.session.startTime) / 1000);
                 pc.session.elapsedSeconds = elapsedSeconds;
                 const hours = elapsedSeconds / 3600;
-                pc.session.currentCost = Math.ceil((hours * state.settings.ratePerHour) / 500) * 500; // Pembulatan ke 500
+                pc.session.currentCost = Math.ceil((hours * state.settings.ratePerHour) / 500) * 500;
             }
         }
     });
 
-    // Kirim sync update setiap 1 detik jika ada admin yang terhubung
     if (adminSockets.size > 0) {
         broadcastAdminState();
     }
@@ -166,14 +164,12 @@ wss.on('connection', (ws) => {
             return;
         }
 
-        // --- 1. Client PC Registration ---
         if (data.event === 'register_pc') {
             const pcName = data.pcName;
             clientSockets[pcName] = ws;
             ws.pcName = pcName;
             console.log(`[PC Terhubung] ${pcName}`);
 
-            // Cek apakah PC ada di daftar state
             let pc = state.pcs.find(p => p.id === pcName);
             if (!pc) {
                 pc = {
@@ -187,7 +183,6 @@ wss.on('connection', (ws) => {
                 state.pcs.push(pc);
             }
 
-            // Sync status lock ke client jika sedang terkunci
             if (pc.status === 'available') {
                 ws.send(JSON.stringify({ action: 'lock_pc' }));
             } else if (pc.session) {
@@ -201,14 +196,12 @@ wss.on('connection', (ws) => {
             saveData();
         }
 
-        // --- 2. Admin Web Dashboard Registration ---
         if (data.event === 'register_admin') {
             adminSockets.add(ws);
             console.log('[Kasir Admin Terhubung]');
             sendAdminFullState(ws);
         }
 
-        // --- 3. Perintah Mulai Sesi (Start Prepaid / Postpaid) ---
         if (data.event === 'start_session') {
             const { pcName, customerName, type, durationMinutes, price, packageId } = data;
             const pc = state.pcs.find(p => p.id === pcName);
@@ -227,7 +220,6 @@ wss.on('connection', (ws) => {
                     fnbOrders: []
                 };
 
-                // Catat transaksi billing
                 state.transactions.unshift({
                     id: 'TRX-' + Date.now().toString().slice(-6),
                     time: new Date().toLocaleTimeString('id-ID'),
@@ -239,7 +231,6 @@ wss.on('connection', (ws) => {
                     cashier: state.cashierShift.activeUser
                 });
 
-                // Perintahkan PC client untuk unlock
                 if (clientSockets[pcName] && clientSockets[pcName].readyState === WebSocket.OPEN) {
                     clientSockets[pcName].send(JSON.stringify({ 
                         action: 'unlock_pc', 
@@ -252,7 +243,6 @@ wss.on('connection', (ws) => {
             }
         }
 
-        // --- 4. Perintah Tambah Waktu (Add Time) ---
         if (data.event === 'add_time') {
             const { pcName, addMinutes, price } = data;
             const pc = state.pcs.find(p => p.id === pcName);
@@ -273,7 +263,6 @@ wss.on('connection', (ws) => {
                     cashier: state.cashierShift.activeUser
                 });
 
-                // Beritahu client
                 if (clientSockets[pcName] && clientSockets[pcName].readyState === WebSocket.OPEN) {
                     clientSockets[pcName].send(JSON.stringify({ 
                         action: 'add_time', 
@@ -287,7 +276,6 @@ wss.on('connection', (ws) => {
             }
         }
 
-        // --- 5. Perintah Stop / Kunci Sesi (End Session) ---
         if (data.event === 'stop_session' || (data.event === 'admin_command' && data.action === 'lock_pc')) {
             const pcName = data.pcName;
             const pc = state.pcs.find(p => p.id === pcName);
@@ -304,7 +292,6 @@ wss.on('connection', (ws) => {
             }
         }
 
-        // --- 6. Pindah PC (Transfer PC Session) ---
         if (data.event === 'transfer_session') {
             const { fromPc, toPc } = data;
             const sourcePc = state.pcs.find(p => p.id === fromPc);
@@ -314,7 +301,6 @@ wss.on('connection', (ws) => {
                 targetPc.session = { ...sourcePc.session };
                 targetPc.status = 'in_use';
 
-                // Kunci source
                 sourcePc.session = null;
                 sourcePc.status = 'available';
 
@@ -322,7 +308,6 @@ wss.on('connection', (ws) => {
                     clientSockets[fromPc].send(JSON.stringify({ action: 'lock_pc' }));
                 }
 
-                // Unlock target
                 if (clientSockets[toPc] && clientSockets[toPc].readyState === WebSocket.OPEN) {
                     clientSockets[toPc].send(JSON.stringify({ 
                         action: 'unlock_pc', 
@@ -335,7 +320,6 @@ wss.on('connection', (ws) => {
             }
         }
 
-        // --- 7. Order Kantin / F&B ---
         if (data.event === 'order_fnb') {
             const { pcName, items, totalAmount, paymentMethod } = data;
             let orderDesc = [];
@@ -348,7 +332,6 @@ wss.on('connection', (ws) => {
                 }
             });
 
-            // Catat transaksi kantin
             state.transactions.unshift({
                 id: 'TRX-' + Date.now().toString().slice(-6),
                 time: new Date().toLocaleTimeString('id-ID'),
@@ -364,7 +347,6 @@ wss.on('connection', (ws) => {
             broadcastAdminState();
         }
 
-        // --- 8. Topup Saldo Member ---
         if (data.event === 'topup_member') {
             const { memberId, amount } = data;
             const member = state.members.find(m => m.id === memberId);
@@ -387,7 +369,6 @@ wss.on('connection', (ws) => {
             }
         }
 
-        // --- 9. Tambah Member Baru ---
         if (data.event === 'add_member') {
             const newMember = {
                 id: 'm' + (state.members.length + 1),
@@ -416,7 +397,6 @@ wss.on('connection', (ws) => {
             broadcastAdminState();
         }
 
-        // --- 10. Tambah PC Baru di Daftar ---
         if (data.event === 'add_pc') {
             const pcNumber = state.pcs.length + 1;
             const defaultId = `PC-${pcNumber < 10 ? '0' + pcNumber : pcNumber}`;
@@ -433,7 +413,6 @@ wss.on('connection', (ws) => {
             broadcastAdminState();
         }
 
-        // --- 11. Broadcast Pesan Chat ke Client ---
         if (data.event === 'send_chat') {
             const { pcName, message } = data;
             if (pcName === 'ALL') {
@@ -507,6 +486,19 @@ function broadcastToAdmins(payload) {
         }
     });
 }
+
+// --- API Endpoint untuk Mengambil Riwayat Sesi Selesai ---
+app.get('/api/history', (req, res) => {
+    try {
+        let history = [];
+        if (fs.existsSync(HISTORY_FILE)) {
+            history = JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'));
+        }
+        res.json({ success: true, history });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
