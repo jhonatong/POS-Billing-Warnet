@@ -136,6 +136,12 @@ setInterval(() => {
                     });
                 } else {
                     pc.session.remainingSeconds = remaining;
+                    if (remaining === 300 && clientSockets[pc.id] && clientSockets[pc.id].readyState === WebSocket.OPEN) {
+    clientSockets[pc.id].send(JSON.stringify({ 
+        action: 'popup_message', 
+        message: 'Peringatan: Sisa waktu bermain Anda tinggal 5 menit!' 
+    }));
+}
                 }
             } else if (pc.session.type === 'postpaid') {
                 // Open time billing
