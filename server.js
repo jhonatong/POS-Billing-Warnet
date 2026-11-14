@@ -39,7 +39,7 @@ let state = {
         { id: 'd2', name: 'Kopi Hitam Panas / Good Day', category: 'Minuman', price: 5000, stock: 60, icon: 'fa-mug-hot' },
         { id: 'd3', name: 'Extra Joss Susu Dingin', category: 'Minuman', price: 7000, stock: 40, icon: 'fa-glass-water-droplet' },
         { id: 's1', name: 'Chitato / Snack Ringan', category: 'Snack', price: 6000, stock: 25, icon: 'fa-cookie-bite' },
-        { id: 's2', name: 'Rokok Gudang Garam Filter (Batang)', category: 'Lainnya', price: 3000, stock: 50, icon: 'fa-smoking' }
+        
     ],
     members: [
         { id: 'm1', username: 'pro_gamer', name: 'Rian Pratama', phone: '08123456789', balance: 50000, role: 'VIP Member' },
